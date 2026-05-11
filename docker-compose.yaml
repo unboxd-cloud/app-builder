@@ -1,0 +1,12 @@
+services:
+  bolt:
+    image: node:18-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && pnpm run build && pnpm run start"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
