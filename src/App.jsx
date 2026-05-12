@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import sdk from '@stackblitz/sdk'
 import './index.css'
 
-const API = '' // Connect to your own API
+// Connect to the platform's API
+const API = '/api'
 
 export default function App() {
   const [projects, setProjects] = useState([])
@@ -26,32 +27,26 @@ export default function App() {
   }, [selected, projects])
 
   const loadProjects = async () => {
-    try {
-      const res = await fetch(`${API}/api/projects`)
-      const data = await res.json()
-      setProjects(data)
-    } catch (e) { console.error(e) }
+    const res = await fetch(`${API}/projects`)
+    const data = await res.json()
+    setProjects(Array.isArray(data) ? data : [])
   }
 
   const createProject = async (name, template = 'vanilla') => {
-    try {
-      const res = await fetch(`${API}/api/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, template, files: FILES[template] })
-      })
-      const project = await res.json()
-      setProjects([...projects, project])
-      setSelected(project.id)
-    } catch (e) { alert('Error: ' + e.message) }
+    const res = await fetch(`${API}/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, template, files: FILES[template] })
+    })
+    const project = await res.json()
+    setProjects([...projects, project])
+    setSelected(project.id)
   }
 
   const deleteProject = async (id) => {
-    try {
-      await fetch(`${API}/api/projects/${id}`, { method: 'DELETE' })
-      setProjects(projects.filter(p => p.id !== id))
-      if (selected === id) setSelected(null)
-    } catch (e) { alert('Error: ' + e.message) }
+    await fetch(`${API}/projects/${id}`, { method: 'DELETE' })
+    setProjects(projects.filter(p => p.id !== id))
+    if (selected === id) setSelected(null)
   }
 
   const openInEditor = async () => {
@@ -99,7 +94,6 @@ export default function App() {
           ) : (
             <div className="empty">
               <h2>Select or create a project</h2>
-              <p>Projects are stored on YOUR API server</p>
             </div>
           )}
         </main>
@@ -113,10 +107,5 @@ const FILES = {
     'index.html': '<h1>Hello</h1><button>Click</button>',
     'style.css': 'body { font-family: sans-serif; padding: 2rem; }',
     'main.js': 'console.log("ok")'
-  },
-  react: {
-    'src/App.jsx': 'export default () => <h1>Hello</h1>',
-    'src/main.jsx': 'import React from "react"',
-    'package.json': '{"dependencies": {"react": "^18"}}'
   }
 }
