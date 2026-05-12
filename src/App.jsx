@@ -1,82 +1,71 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import sdk from '@stackblitz/sdk'
 
-const TEMPLATES = [
-  { id: 'react', name: 'React', description: 'Create React App', emoji: '⚛️', files: { 'App.jsx': 'export default function App() { return <h1>Hello</h1> }' }},
-  { id: 'vue', name: 'Vue', description: 'Vue 3 App', emoji: '💚', files: { 'App.vue': '<template><h1>Hello</h1></template>' }},
-  { id: 'node', name: 'Node.js', description: 'Express Server', emoji: '🟢', files: { 'server.js': 'const express = require("express")\nconst app = express()\napp.get("/", (req, res) => res.send("Hello"))\napp.listen(3000)' }},
-]
+const DEMO_PROJECT = {
+  files: {
+    'index.html': `<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Hello from App Builder! 🚀</h1>
+  <button onclick="alert('Clicked!')">Click Me</button>
+  <script type="module" src="main.js"></script>
+</body>
+</html>`,
+    'style.css': `body {
+  font-family: system-ui, sans-serif;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  background: #1a1a2e;
+  color: #eee;
+}
+button {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}`,
+    'main.js': `console.log('App initialized!')`
+  },
+  title: 'App Builder Demo',
+  template: 'vanilla',
+  settings: { theme: 'dark' }
+}
 
 export default function App() {
-  const [projects, setProjects] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [editorContent, setEditorContent] = useState('')
+  const [embedRef, setEmbedRef] = useState(null)
 
-  const createProject = (template) => {
-    const newProject = {
-      id: Date.now().toString(36),
-      name: `Project ${projects.length + 1}`,
-      template,
-      files: template.files,
-      created: new Date().toISOString()
+  useEffect(() => {
+    if (embedRef) {
+      sdk.embedProject(DEMO_PROJECT, embedRef, {
+        height: 600,
+        theme: 'dark',
+        view: 'preview'
+      })
     }
-    setProjects([...projects, newProject])
-  }
+  }, [embedRef])
 
-  const deleteProject = (id) => {
-    setProjects(projects.filter(p => p.id !== id))
+  const openEditor = () => {
+    sdk.openProject(DEMO_PROJECT, {
+      openFile: 'index.html',
+      theme: 'dark'
+    })
   }
 
   return (
     <div className="app-builder">
       <header className="header">
-        <h1>⚡ App Builder <span className="badge">Self-Hosted</span></h1>
-        <div className="status">Running on your infrastructure</div>
+        <h1>⚡ App Builder</h1>
+        <button onClick={openEditor}>Open in Editor</button>
       </header>
-
-      <div className="main">
-        <aside className="sidebar">
-          <h3>Templates</h3>
-          {TEMPLATES.map(t => (
-            <button key={t.id} className="template-btn" onClick={() => createProject(t)}>
-              {t.emoji} {t.name}
-            </button>
-          ))}
-          
-          <h3>Your Projects</h3>
-          {projects.length === 0 ? (
-            <p className="empty">No projects yet</p>
-          ) : (
-            projects.map(p => (
-              <div key={p.id} className="project-item" onClick={() => setSelected(p)}>
-                <span>{p.template.emoji}</span>
-                <span>{p.name}</span>
-                <button className="delete" onClick={(e) => { e.stopPropagation(); deleteProject(p.id) }}>×</button>
-              </div>
-            ))
-          )}
-        </aside>
-
-        <main className="editor">
-          {selected ? (
-            <div>
-              <div className="editor-header">
-                <h2>{selected.name}</h2>
-                <button className="run">▶ Run Locally</button>
-              </div>
-              <textarea 
-                value={JSON.stringify(selected.files, null, 2)}
-                onChange={(e) => setEditorContent(e.target.value)}
-                className="code-editor"
-              />
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h2>Select a template to get started</h2>
-              <p>Your projects run on your servers, not ours.</p>
-            </div>
-          )}
-        </main>
-      </div>
+      <main>
+        <div ref={setEmbedRef} id="embed-container" />
+      </main>
     </div>
   )
 }
